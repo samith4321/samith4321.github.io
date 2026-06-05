@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expense Tracker — Samith Prabhu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --card: #16161f; --border: #222230;
+      --gold: #c9a84c; --gold-dim: #8b6914; --text: #e8e8f0; --muted: #7878a0;
+      --green: #22c55e; --red: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; min-height: 100vh; }
+    header { background: rgba(10,10,15,0.95); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); }
+    header a { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--gold); text-decoration: none; font-size: 1rem; }
+    header span { font-size: 0.8rem; color: var(--muted); }
+    .container { max-width: 860px; margin: 0 auto; padding: 40px 24px; }
+    h1 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 6px; }
+    .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 32px; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+    .stat-card .num { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--gold); }
+    .stat-card .lbl { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+
+    /* Form */
+    .form-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 28px; }
+    .form-card h2 { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 18px; color: var(--gold); letter-spacing: 0.5px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    label { font-size: 0.78rem; color: var(--muted); font-weight: 500; letter-spacing: 0.3px; }
+    input, select { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 300; transition: border-color 0.2s; width: 100%; }
+    input:focus, select:focus { outline: none; border-color: var(--gold-dim); }
+    select option { background: var(--surface); }
+    .btn-add { background: var(--gold); color: #0a0a0f; border: none; padding: 11px 28px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: opacity 0.15s; width: 100%; margin-top: 4px; }
+    .btn-add:hover { opacity: 0.85; }
+
+    /* Filters */
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; background: var(--card); border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .filter-btn.active { background: var(--gold); border-color: var(--gold); color: #0a0a0f; font-weight: 500; }
+    .sort-select { background: var(--card); border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; color: var(--muted); font-size: 0.8rem; cursor: pointer; }
+
+    /* List */
+    .expense-list { display: flex; flex-direction: column; gap: 10px; }
+    .expense-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; transition: border-color 0.15s; }
+    .expense-item:hover { border-color: var(--gold-dim); }
+    .exp-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .exp-info { flex: 1; }
+    .exp-desc { font-size: 0.92rem; font-weight: 400; }
+    .exp-meta { font-size: 0.75rem; color: var(--muted); margin-top: 3px; display: flex; gap: 10px; }
+    .badge { padding: 2px 8px; border-radius: 10px; background: rgba(201,168,76,0.1); color: var(--gold); font-size: 0.7rem; font-weight: 500; }
+    .exp-amount { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--text); white-space: nowrap; }
+    .btn-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; padding: 4px 8px; border-radius: 6px; transition: color 0.15s, background 0.15s; }
+    .btn-del:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.9rem; }
+
+    .total-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+    .total-bar span { font-size: 0.82rem; color: var(--muted); }
+    .total-bar strong { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--gold); }
+
+    @media(max-width: 600px) {
+      .stats { grid-template-columns: repeat(3,1fr); }
+      .form-row { grid-template-columns: 1fr; }
+      header { padding: 14px 16px; }
+      .container { padding: 24px 16px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <a href="index.html">← SP</a>
+  <span>Expense Tracker</span>
+</header>
+<div class="container">
+  <h1>Expense Tracker</h1>
+  <p class="subtitle">Log and categorise your expenses. Data saved in your browser.</p>
+
+  <div class="stats">
+    <div class="stat-card"><div class="num" id="statTotal">₹0</div><div class="lbl">Total Spent</div></div>
+    <div class="stat-card"><div class="num" id="statCount">0</div><div class="lbl">Entries</div></div>
+    <div class="stat-card"><div class="num" id="statMonth">₹0</div><div class="lbl">This Month</div></div>
+  </div>
+
+  <div class="form-card">
+    <h2>ADD EXPENSE</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Amount (₹)</label>
+        <input type="number" id="inp-amount" placeholder="250" min="0" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="inp-date"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <input type="text" id="inp-desc" placeholder="e.g. Lunch at canteen"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="inp-cat">
+          <option>Food</option><option>Transport</option><option>Entertainment</option>
+          <option>Shopping</option><option>Health</option><option>Education</option>
+          <option>Utilities</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-add" onclick="addExpense()">+ Add Expense</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="filters" id="filters">
+      <button class="filter-btn active" onclick="setFilter('All', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('Food', this)">Food</button>
+      <button class="filter-btn" onclick="setFilter('Transport', this)">Transport</button>
+      <button class="filter-btn" onclick="setFilter('Entertainment', this)">Entertainment</button>
+      <button class="filter-btn" onclick="setFilter('Shopping', this)">Shopping</button>
+      <button class="filter-btn" onclick="setFilter('Health', this)">Health</button>
+      <button class="filter-btn" onclick="setFilter('Education', this)">Education</button>
+      <button class="filter-btn" onclick="setFilter('Other', this)">Other</button>
+    </div>
+  </div>
+
+  <div class="expense-list" id="expense-list"></div>
+  <div class="total-bar" id="total-bar" style="display:none">
+    <span id="total-label">Showing all</span>
+    <strong id="total-val">₹0</strong>
+  </div>
+</div>
+
+<script>
+const ICONS = { Food:'🍽️', Transport:'🚌', Entertainment:'🎮', Shopping:'🛍️', Health:'💊', Education:'📚', Utilities:'💡', Other:'📦' };
+let expenses = JSON.parse(localStorage.getItem('sp_expenses') || '[]');
+let currentFilter = 'All';
+
+function save() { localStorage.setItem('sp_expenses', JSON.stringify(expenses)); }
+
+function addExpense() {
+  const amount = parseFloat(document.getElementById('inp-amount').value);
+  const desc = document.getElementById('inp-desc').value.trim();
+  const cat = document.getElementById('inp-cat').value;
+  const date = document.getElementById('inp-date').value || new Date().toISOString().slice(0,10);
+  if (!amount || amount <= 0 || !desc) { alert('Please fill in amount and description.'); return; }
+  expenses.unshift({ id: Date.now(), amount, desc, cat, date });
+  save(); render();
+  document.getElementById('inp-amount').value = '';
+  document.getElementById('inp-desc').value = '';
+}
+
+function deleteExpense(id) {
+  expenses = expenses.filter(e => e.id !== id);
+  save(); render();
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function render() {
+  const filtered = currentFilter === 'All' ? expenses : expenses.filter(e => e.cat === currentFilter);
+  const list = document.getElementById('expense-list');
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const monthTotal = expenses.filter(e => e.date.startsWith(thisMonth)).reduce((s,e) => s + e.amount, 0);
+  document.getElementById('statTotal').textContent = '₹' + expenses.reduce((s,e) => s+e.amount,0).toLocaleString('en-IN', {maximumFractionDigits:0});
+  document.getElementById('statCount').textContent = expenses.length;
+  document.getElementById('statMonth').textContent = '₹' + monthTotal.toLocaleString('en-IN', {maximumFractionDigits:0});
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">💸</div><p>No expenses yet. Add one above!</p></div>`;
+    document.getElementById('total-bar').style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = filtered.map(e => `
+    <div class="expense-item">
+      <div class="exp-icon">${ICONS[e.cat] || '📦'}</div>
+      <div class="exp-info">
+        <div class="exp-desc">${e.desc}</div>
+        <div class="exp-meta"><span class="badge">${e.cat}</span><span>${e.date}</span></div>
+      </div>
+      <div class="exp-amount">₹${e.amount.toLocaleString('en-IN', {maximumFractionDigits:2})}</div>
+      <button class="btn-del" onclick="deleteExpense(${e.id})">✕</button>
+    </div>`).join('');
+
+  const total = filtered.reduce((s,e) => s+e.amount, 0);
+  const bar = document.getElementById('total-bar');
+  bar.style.display = 'flex';
+  document.getElementById('total-label').textContent = currentFilter === 'All' ? `All ${filtered.length} entries` : `${currentFilter} · ${filtered.length} entries`;
+  document.getElementById('total-val').textContent = '₹' + total.toLocaleString('en-IN', {maximumFractionDigits:2});
+}
+
+// Set today's date as default
+document.getElementById('inp-date').value = new Date().toISOString().slice(0,10);
+render();
+</script>
+</body>
+</html>

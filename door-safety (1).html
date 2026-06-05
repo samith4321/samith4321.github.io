@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Door Safety — Samith Prabhu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --bg:#0a0a0f; --surface:#111118; --card:#16161f; --border:#222230; --gold:#c9a84c; --gold-dim:#8b6914; --text:#e8e8f0; --muted:#7878a0; --green:#22c55e; --red:#ef4444; --amber:#f59e0b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; min-height: 100vh; }
+    header { background: rgba(10,10,15,0.95); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); }
+    header a { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--gold); text-decoration: none; }
+    header span { font-size: 0.8rem; color: var(--muted); }
+    .container { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 6px; }
+    .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 40px; }
+    h2 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--gold); letter-spacing: 0.5px; }
+
+    .section { margin-bottom: 40px; }
+
+    /* Overview cards */
+    .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 40px; }
+    .ov-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .ov-card .icon { font-size: 1.6rem; margin-bottom: 10px; }
+    .ov-card h3 { font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .ov-card p { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+    /* Demo */
+    .demo-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 40px; }
+    .demo-scene { display: flex; align-items: center; justify-content: center; gap: 40px; padding: 32px 0; flex-wrap: wrap; }
+    .car-container { position: relative; }
+    .car { font-size: 5rem; transition: all 0.3s; display: block; }
+    .door { position: absolute; right: -8px; top: 30%; font-size: 1.5rem; transition: transform 0.5s; transform-origin: left center; }
+    .door.open { transform: rotate(-60deg); }
+    .sensor-zone { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .sensor { width: 60px; height: 60px; border-radius: 12px; background: var(--surface); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; transition: border-color 0.3s, box-shadow 0.3s; }
+    .sensor.active { border-color: var(--amber); box-shadow: 0 0 16px rgba(245,158,11,0.3); }
+    .sensor.danger { border-color: var(--red); box-shadow: 0 0 16px rgba(239,68,68,0.4); }
+    .sensor-label { font-size: 0.7rem; color: var(--muted); text-align: center; }
+    .cyclist { font-size: 2.5rem; transition: all 0.8s ease; }
+    .status-bar { background: var(--surface); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); transition: background 0.3s; flex-shrink: 0; }
+    .status-dot.warn { background: var(--amber); animation: blink 0.6s infinite; }
+    .status-dot.danger { background: var(--red); animation: blink 0.4s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .status-text { font-size: 0.85rem; }
+    .alert-box { display: none; background: rgba(239,68,68,0.1); border: 1px solid var(--red); border-radius: 8px; padding: 10px 16px; margin-top: 12px; font-size: 0.82rem; color: var(--red); align-items: center; gap: 8px; }
+    .alert-box.visible { display: flex; }
+    .demo-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+    .ctrl-btn { padding: 9px 18px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.83rem; cursor: pointer; transition: all 0.15s; }
+    .ctrl-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+    .ctrl-btn.active-btn { background: var(--gold); color: #0a0a0f; border-color: var(--gold); font-weight: 500; }
+
+    /* Code block */
+    .code-block { background: #0d1117; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .code-header { background: var(--surface); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .code-header span { font-size: 0.75rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+    pre { padding: 20px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.7; color: #c9d1d9; }
+    .kw { color: #ff7b72; } .fn { color: #79c0ff; } .str { color: #a5d6ff; }
+    .cm { color: #6e7681; font-style: italic; } .num { color: #ffa657; } .var { color: #e6edf3; }
+
+    /* Flow */
+    .flow { display: flex; flex-direction: column; gap: 0; }
+    .flow-step { display: flex; gap: 16px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .flow-step:last-child { border-bottom: none; }
+    .step-num { width: 32px; height: 32px; border-radius: 8px; background: rgba(201,168,76,0.1); border: 1px solid var(--gold-dim); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--gold); flex-shrink: 0; }
+    .step-content h3 { font-size: 0.9rem; font-weight: 500; margin-bottom: 3px; }
+    .step-content p { font-size: 0.8rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+<header>
+  <a href="index.html">← SP</a>
+  <span>Smart Door Safety System</span>
+</header>
+
+<div class="container">
+  <h1>Smart Side Door Safety System</h1>
+  <p class="subtitle">An ESP32-based embedded system that prevents unsafe car door openings using PIR and ultrasonic sensors. Built at MIT Manipal · Sep–Oct 2025.</p>
+
+  <div class="overview-grid">
+    <div class="ov-card"><div class="icon">🔌</div><h3>Microcontroller</h3><p>ESP32 programmed in C++ with interrupt-driven sensor logic</p></div>
+    <div class="ov-card"><div class="icon">📡</div><h3>PIR Sensor</h3><p>Detects motion from approaching cyclists and pedestrians</p></div>
+    <div class="ov-card"><div class="icon">📻</div><h3>Ultrasonic Sensor</h3><p>Measures exact distance of approaching objects in real time</p></div>
+    <div class="ov-card"><div class="icon">🚨</div><h3>Alert System</h3><p>LED + buzzer alert when unsafe conditions are detected</p></div>
+  </div>
+
+  <div class="section">
+    <h2>INTERACTIVE DEMO</h2>
+    <div class="demo-box">
+      <div class="demo-scene">
+        <div class="car-container">
+          <span class="car">🚗</span>
+          <span class="door" id="door">🚪</span>
+        </div>
+        <div class="sensor-zone">
+          <div class="sensor" id="pir-sensor">👁️</div>
+          <div class="sensor-label">PIR Sensor</div>
+          <div class="sensor" id="ultra-sensor">📡</div>
+          <div class="sensor-label">Ultrasonic</div>
+        </div>
+        <div>
+          <div class="cyclist" id="cyclist" style="opacity:0;transform:translateX(80px)">🚴</div>
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="status-dot" id="status-dot"></div>
+        <span class="status-text" id="status-text">Safe — no objects detected nearby</span>
+      </div>
+      <div class="alert-box" id="alert-box">⚠️ <strong>UNSAFE TO OPEN DOOR</strong> — Object detected within danger zone! LED + Buzzer triggered.</div>
+      <div class="demo-controls">
+        <button class="ctrl-btn" onclick="simApproach()">🚴 Simulate Cyclist Approaching</button>
+        <button class="ctrl-btn" id="door-btn" onclick="toggleDoor()">🚪 Try Opening Door</button>
+        <button class="ctrl-btn" onclick="resetSim()">↺ Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>HOW IT WORKS</h2>
+    <div class="demo-box flow">
+      <div class="flow-step"><div class="step-num">1</div><div class="step-content"><h3>Sensor polling loop runs on ESP32</h3><p>The microcontroller continuously reads both the PIR and ultrasonic sensors every 100ms using a timed interrupt.</p></div></div>
+      <div class="flow-step"><div class="step-num">2</div><div class="step-content"><h3>PIR detects motion</h3><p>If the passive infrared sensor picks up movement, the system enters a heightened alert state and begins distance measurement.</p></div></div>
+      <div class="flow-step"><div class="step-num">3</div><div class="step-content"><h3>Ultrasonic measures distance</h3><p>An HC-SR04 ultrasonic pulse measures exact distance. If object is within the danger threshold (&lt;80cm), a danger flag is set.</p></div></div>
+      <div class="flow-step"><div class="step-num">4</div><div class="step-content"><h3>Alert triggered</h3><p>The onboard LED flashes and buzzer sounds. The alert persists until the object clears the safe zone.</p></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>CORE FIRMWARE (C++)</h2>
+    <div class="code-block">
+      <div class="code-header"><span>door_safety.cpp</span><span>ESP32 · C++</span></div>
+      <pre><span class="cm">// Smart Side Door Safety System — ESP32 Firmware</span>
+<span class="kw">#include</span> <span class="str">&lt;Arduino.h&gt;</span>
+
+<span class="cm">// Pin definitions</span>
+<span class="kw">const int</span> <span class="var">PIR_PIN</span>      = <span class="num">14</span>;
+<span class="kw">const int</span> <span class="var">TRIG_PIN</span>     = <span class="num">12</span>;
+<span class="kw">const int</span> <span class="var">ECHO_PIN</span>     = <span class="num">13</span>;
+<span class="kw">const int</span> <span class="var">LED_PIN</span>      = <span class="num">2</span>;
+<span class="kw">const int</span> <span class="var">BUZZER_PIN</span>   = <span class="num">4</span>;
+<span class="kw">const int</span> <span class="var">DANGER_CM</span>    = <span class="num">80</span>;   <span class="cm">// danger threshold in cm</span>
+
+<span class="kw">long</span> <span class="fn">getDistanceCm</span>() {
+  digitalWrite(<span class="var">TRIG_PIN</span>, <span class="num">LOW</span>);
+  delayMicroseconds(<span class="num">2</span>);
+  digitalWrite(<span class="var">TRIG_PIN</span>, <span class="num">HIGH</span>);
+  delayMicroseconds(<span class="num">10</span>);
+  digitalWrite(<span class="var">TRIG_PIN</span>, <span class="num">LOW</span>);
+  <span class="kw">long</span> <span class="var">duration</span> = pulseIn(<span class="var">ECHO_PIN</span>, <span class="num">HIGH</span>);
+  <span class="kw">return</span> <span class="var">duration</span> * <span class="num">0.034</span> / <span class="num">2</span>;
+}
+
+<span class="kw">void</span> <span class="fn">triggerAlert</span>(<span class="kw">bool</span> <span class="var">on</span>) {
+  digitalWrite(<span class="var">LED_PIN</span>, <span class="var">on</span> ? <span class="num">HIGH</span> : <span class="num">LOW</span>);
+  <span class="kw">if</span> (<span class="var">on</span>) tone(<span class="var">BUZZER_PIN</span>, <span class="num">1000</span>);
+  <span class="kw">else</span> noTone(<span class="var">BUZZER_PIN</span>);
+}
+
+<span class="kw">void</span> <span class="fn">setup</span>() {
+  pinMode(<span class="var">PIR_PIN</span>, <span class="num">INPUT</span>);
+  pinMode(<span class="var">TRIG_PIN</span>, <span class="num">OUTPUT</span>);
+  pinMode(<span class="var">ECHO_PIN</span>, <span class="num">INPUT</span>);
+  pinMode(<span class="var">LED_PIN</span>, <span class="num">OUTPUT</span>);
+  pinMode(<span class="var">BUZZER_PIN</span>, <span class="num">OUTPUT</span>);
+  Serial.begin(<span class="num">115200</span>);
+}
+
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  <span class="kw">bool</span> <span class="var">motionDetected</span> = digitalRead(<span class="var">PIR_PIN</span>);
+
+  <span class="kw">if</span> (<span class="var">motionDetected</span>) {
+    <span class="kw">long</span> <span class="var">dist</span> = <span class="fn">getDistanceCm</span>();
+    Serial.print(<span class="str">"Distance: "</span>); Serial.println(<span class="var">dist</span>);
+
+    <span class="kw">if</span> (<span class="var">dist</span> &lt; <span class="var">DANGER_CM</span> &amp;&amp; <span class="var">dist</span> &gt; <span class="num">0</span>) {
+      <span class="fn">triggerAlert</span>(<span class="kw">true</span>);   <span class="cm">// LED on, buzzer on</span>
+    } <span class="kw">else</span> {
+      <span class="fn">triggerAlert</span>(<span class="kw">false</span>);  <span class="cm">// all clear</span>
+    }
+  } <span class="kw">else</span> {
+    <span class="fn">triggerAlert</span>(<span class="kw">false</span>);
+  }
+  delay(<span class="num">100</span>);  <span class="cm">// poll every 100ms</span>
+}</pre>
+    </div>
+  </div>
+</div>
+
+<script>
+let cyclistPresent = false, doorOpen = false, simRunning = false;
+
+function simApproach() {
+  if (simRunning) return;
+  simRunning = true;
+  cyclistPresent = true;
+  const cyclist = document.getElementById('cyclist');
+  cyclist.style.opacity = '1';
+  cyclist.style.transform = 'translateX(80px)';
+  setTimeout(() => { cyclist.style.transform = 'translateX(20px)'; }, 50);
+
+  setTimeout(() => {
+    document.getElementById('pir-sensor').classList.add('active');
+    setStatus('warn', '⚡ Motion detected — PIR triggered, measuring distance...');
+  }, 600);
+  setTimeout(() => {
+    document.getElementById('ultra-sensor').classList.add('danger');
+    document.getElementById('pir-sensor').classList.add('danger');
+    setStatus('danger', '🚨 Object within 80cm danger zone — ALERT ACTIVE');
+    document.getElementById('alert-box').classList.add('visible');
+  }, 1400);
+  setTimeout(() => { simRunning = false; }, 1500);
+}
+
+function toggleDoor() {
+  doorOpen = !doorOpen;
+  document.getElementById('door').classList.toggle('open', doorOpen);
+  const btn = document.getElementById('door-btn');
+  btn.classList.toggle('active-btn', doorOpen);
+  btn.textContent = doorOpen ? '🚪 Door Open (UNSAFE!)' : '🚪 Try Opening Door';
+}
+
+function resetSim() {
+  cyclistPresent = false; doorOpen = false; simRunning = false;
+  document.getElementById('cyclist').style.opacity = '0';
+  document.getElementById('cyclist').style.transform = 'translateX(80px)';
+  document.getElementById('pir-sensor').className = 'sensor';
+  document.getElementById('ultra-sensor').className = 'sensor';
+  document.getElementById('door').classList.remove('open');
+  document.getElementById('door-btn').classList.remove('active-btn');
+  document.getElementById('door-btn').textContent = '🚪 Try Opening Door';
+  document.getElementById('alert-box').classList.remove('visible');
+  setStatus('safe', 'Safe — no objects detected nearby');
+}
+
+function setStatus(type, msg) {
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-dot' + (type !== 'safe' ? ' ' + type : '');
+  document.getElementById('status-text').textContent = msg;
+}
+</script>
+</body>
+</html>
